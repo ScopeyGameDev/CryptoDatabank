@@ -3,72 +3,83 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum EnumBuySell { Buy, Sell };
-[System.Serializable]
-public class BuySellCrypto
+namespace CryptoDatabank
 {
-    public EnumBuySell BuySell;
-    public float Price;
-    public float Value;
+    internal enum EnumBuySell { Buy, Sell };
+    [System.Serializable]
+    internal class BuySellCrypto
+    {
+        [SerializeField] internal EnumBuySell BuySell;
+        [SerializeField] internal double Price;
+        internal double Balance;
+        [SerializeField] internal double Value;
 
-    public BuySellCrypto(EnumBuySell _BuySell, float _Price, float _Value)
-	{
-        BuySell = _BuySell;
-        Price = _Price;
-        Value = _Value;
-	}
-}
+        internal BuySellCrypto(EnumBuySell _BuySell, double _Balance, double _Price, double _Value)
+        {
+            BuySell = _BuySell;
+            Price = _Price;
+            Balance = _Balance;
+            Value = _Value;
+        }
+    }
 
-[System.Serializable]
-public class Cryptocurrency
-{
-    public string Name;
-    public float Balance;
-    public float Price;
-    public float Profit
-	{
-        get { return CalculateProfits(); }
-	}
-
-    public List<BuySellCrypto> BuySellCryptos = new List<BuySellCrypto>();
-
-    void BuySell(EnumBuySell BuySell, float _Price, float _Value)
-	{
-        BuySellCrypto BuySellCrypto = new BuySellCrypto(BuySell, _Price, _Value);
-        BuySellCryptos.Add(BuySellCrypto);
-        Balance = _Price;
-	}
-
-    public void ChangePrice(float _Price)
-	{
-        Price = _Price;
-	}
-
-    float CalculateProfits()
-	{
-        float Spent = 0;
-
-		foreach (BuySellCrypto item in BuySellCryptos)
+    [System.Serializable]
+    internal class Cryptocurrency
+    {
+        [SerializeField] internal string Name;
+        [SerializeField] internal double Balance;
+        [SerializeField] internal double Price;
+        internal double Spent
 		{
-            if (item.BuySell == EnumBuySell.Buy)
-			{
-                Spent += item.Value;
-			}
-			else
-			{
-                Spent -= item.Value;
-			}
+            get { return CalculateSpent(); }
 		}
+        internal double Profit
+        {
+            get { return CalculateProfits(); }
+        }
 
-        float CurrentValue = Balance * Price;
+        [SerializeField] internal List<BuySellCrypto> BuySellCryptos = new List<BuySellCrypto>();
 
-        return CurrentValue - Spent;
-	}
+        internal Cryptocurrency(string _Name, double _Balance, double _Price)
+        {
+            Name = _Name;
+            Balance = _Balance;
+            Price = _Price;
+        }
 
-    void CreateCryptocurrency(string _Name, float _Balance, float _Price)
-	{
-        Name = _Name;
-        Balance = _Balance;
-        Price = _Price;
-	}
+        void BuySell(EnumBuySell BuySell, double _Price, double _Value)
+        {
+            BuySellCrypto BuySellCrypto = new BuySellCrypto(BuySell, _Price, 0, _Value);
+            BuySellCryptos.Add(BuySellCrypto);
+            Balance = _Price;
+        }
+
+        internal void ChangePrice(float _Price)
+        {
+            Price = _Price;
+        }
+
+        double CalculateProfits()
+        {
+            double CurrentValue = Balance * Price;
+            return CurrentValue - Spent;
+        }
+
+        double CalculateSpent()
+		{
+            double _Spent = 0;
+            foreach (BuySellCrypto item in BuySellCryptos)
+            {
+                if (item.BuySell == EnumBuySell.Buy)
+                {
+                    _Spent += item.Value;
+                }
+                else
+                {
+                    _Spent -= item.Value;
+                }
+            }
+            return _Spent;
+        }
+    }
 }
