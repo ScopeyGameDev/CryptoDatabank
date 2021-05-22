@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace CoinspotAPI
 {
+    /// <summary>
+    /// https://github.com/sdoddler/CoinspotAPI-CSharp
+    /// </summary>
     static class CoinspotAPI
     {
 

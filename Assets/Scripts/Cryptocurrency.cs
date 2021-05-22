@@ -9,16 +9,16 @@ namespace CryptoDatabank
     [System.Serializable]
     internal class BuySellCrypto
     {
-        [SerializeField] internal EnumBuySell BuySell;
-        [SerializeField] internal double Price;
-        internal double Balance;
-        [SerializeField] internal double Value;
+        internal EnumBuySell BuySell;
+        internal double Price;
+        internal double Amount;
+        internal double Value;
 
-        internal BuySellCrypto(EnumBuySell _BuySell, double _Balance, double _Price, double _Value)
+        internal BuySellCrypto(EnumBuySell _BuySell, double _Amount, double _Price, double _Value)
         {
             BuySell = _BuySell;
             Price = _Price;
-            Balance = _Balance;
+            Amount = _Amount;
             Value = _Value;
         }
     }
@@ -26,9 +26,9 @@ namespace CryptoDatabank
     [System.Serializable]
     internal class Cryptocurrency
     {
-        [SerializeField] internal string Name;
-        [SerializeField] internal double Balance;
-        [SerializeField] internal double Price;
+        internal string Name;
+        internal double Balance;
+        internal double Price;
         internal double Spent
 		{
             get { return CalculateSpent(); }
@@ -47,11 +47,10 @@ namespace CryptoDatabank
             Price = _Price;
         }
 
-        void BuySell(EnumBuySell BuySell, double _Price, double _Value)
+        internal void BuySell(EnumBuySell _BuySell, double _Amount, double _Price, double _Value)
         {
-            BuySellCrypto BuySellCrypto = new BuySellCrypto(BuySell, _Price, 0, _Value);
+            BuySellCrypto BuySellCrypto = new BuySellCrypto(_BuySell, _Amount, _Price, _Value);
             BuySellCryptos.Add(BuySellCrypto);
-            Balance = _Price;
         }
 
         internal void ChangePrice(float _Price)

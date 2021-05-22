@@ -9,8 +9,8 @@ namespace CryptoDatabank
 {
     public class CryptocurrencyManager : MonoBehaviour
     {
-		#region Variables
-		[SerializeField] List<Cryptocurrency> Cryptocurrencies = new List<Cryptocurrency>();
+        #region Variables
+        [SerializeField] List<Cryptocurrency> Cryptocurrencies = new List<Cryptocurrency>();
         int SelectedCryptocurrency;
 
         [Header("Title")]
@@ -22,15 +22,8 @@ namespace CryptoDatabank
         [SerializeField] TMP_Text SpentText;
         [SerializeField] TMP_Text ProfitText;
 
-        [Header("Input Fields")]
-        [SerializeField] TMP_InputField BalanceInputField;
-        [SerializeField] TMP_InputField PriceInputField;
-
         [Header("Buttons")]
         [SerializeField] Button RefreshButton;
-        [SerializeField] Button ChangeButton;
-        [SerializeField] Button BuyButton;
-        [SerializeField] Button SellButton;
 
         [Header("List")]
         [SerializeField] TMP_Text AudPriceText;
@@ -48,9 +41,8 @@ namespace CryptoDatabank
             UpdateUI();
 
             RefreshButton.onClick.AddListener(FindCryptocurrencies);
-            ChangeButton.onClick.AddListener(Change);
 
-            Task<string> TransactionTask = Task<string>.Run(() => CoinspotAPI.CoinspotAPI.ListTransactionHistory("cc58e215110632a0805dc7d2bee1f4dc", "EGVWJM3ATTHPE18FX5LQF5EVA0BF4QVB47FLK3Y71QK7F4WLL0XTY72A8TUWP52CXYUQJ695GJFMNBVV"));
+            Task<string> TransactionTask = Task<string>.Run(() => CoinspotAPI.CoinspotAPI.ListTransactionHistory("cc58e215110632a0805dc7d2bee1f4dc", "EGVWJM3ATTHPE18FX5LQF5EVA0BF4QVB47FLK3Y71QK7F4WLL0XTY72A8TUWP52CXYUQJ695GJFMNBVV", "BTC"));
             Debug.Log(TransactionTask.Result);
         }
 
@@ -95,6 +87,63 @@ namespace CryptoDatabank
             CryptocurrencySelected(SelectedCryptocurrency);
 
             CreatedCryptoSelects[0].gameObject.SetActive(false);
+
+            //for (int i = 1; i < Cryptocurrencies.Count; i++)
+            //{
+            //    FindTransactionHistory(i);
+            //}
+        }
+
+        void FindTransactionHistory(int Crypto)
+		{
+            Task<string> TransactionTask = Task<string>.Run(() => CoinspotAPI.CoinspotAPI.ListTransactionHistory("cc58e215110632a0805dc7d2bee1f4dc", "EGVWJM3ATTHPE18FX5LQF5EVA0BF4QVB47FLK3Y71QK7F4WLL0XTY72A8TUWP52CXYUQJ695GJFMNBVV", Cryptocurrencies[Crypto].Name));
+            string Transactions = TransactionTask.Result;
+            Debug.Log(Transactions);
+
+            int BuyOrdersIndex = Transactions.IndexOf("\"buyorders\":") + "\"buyorders\":".Length;
+            int SellOrdersIndex = Transactions.IndexOf(",\"sellorders\":");
+
+            string BuyOrdersString = Transactions.Substring(BuyOrdersIndex, SellOrdersIndex - BuyOrdersIndex);
+            Debug.Log(BuyOrdersString);
+
+			int Start = 0;
+			int End = 0;
+			while (BuyOrdersString.IndexOf("{", Start) != -1)
+			{
+				Start = BuyOrdersString.IndexOf("\"amount\":", Start);
+				Start += "\"amount\":".Length;
+				End = BuyOrdersString.IndexOf(",", Start);
+				double Amount = double.Parse(BuyOrdersString.Substring(Start, End - Start));
+
+				Start = BuyOrdersString.IndexOf("\"audtotal\":", Start);
+				Start += "\"audtotal\":".Length;
+				End = BuyOrdersString.IndexOf("}", Start);
+				double AudTotal = double.Parse(BuyOrdersString.Substring(Start, End - Start));
+
+				Debug.Log(/*"Name: " + Name + */" Amount: " + Amount + " AUDTotal: " + AudTotal);
+                Cryptocurrencies[Crypto].BuySell(EnumBuySell.Buy, Amount, (AudTotal / Amount) * 0.990099f, AudTotal);
+			}
+
+            SellOrdersIndex = Transactions.IndexOf(",\"sellorders\":") + ",\"sellorders\":".Length;
+            string SellOrdersString = Transactions.Substring(SellOrdersIndex);
+
+            Start = 0;
+            End = 0;
+            while (SellOrdersString.IndexOf("{", Start) != -1)
+            {
+                Start = SellOrdersString.IndexOf("\"amount\":", Start);
+                Start += "\"amount\":".Length;
+                End = SellOrdersString.IndexOf(",", Start);
+                double Amount = double.Parse(SellOrdersString.Substring(Start, End - Start));
+
+                Start = SellOrdersString.IndexOf("\"audtotal\":", Start);
+                Start += "\"audtotal\":".Length;
+                End = SellOrdersString.IndexOf("}", Start);
+                double AudTotal = double.Parse(SellOrdersString.Substring(Start, End - Start));
+
+                Debug.Log(/*"Name: " + Name + */" Amount: " + Amount + " AUDTotal: " + AudTotal);
+                Cryptocurrencies[Crypto].BuySell(EnumBuySell.Sell, Amount, (AudTotal / Amount) * 1.009711f, AudTotal);
+            }
         }
 
 		void UpdateUI()
@@ -113,15 +162,6 @@ namespace CryptoDatabank
             PriceText.text = "$" + Cryptocurrencies[SelectedCryptocurrency].Price.ToString();
             SpentText.text = Cryptocurrencies[SelectedCryptocurrency].Spent.ToString("$0.00");
             ProfitText.text = Cryptocurrencies[SelectedCryptocurrency].Profit.ToString("$0.00");
-        }
-
-        void Change()
-        {
-            double BalanceInput = double.Parse(BalanceInputField.text);
-            double PriceInput = double.Parse(PriceInputField.text);
-            Cryptocurrencies[0].Balance = BalanceInput;
-            Cryptocurrencies[0].Price = PriceInput;
-            UpdateUI();
         }
 
         internal void CryptocurrencySelected(int _SelectedCryptocurrency)
